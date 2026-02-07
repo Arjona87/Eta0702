@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ETA - Sistema Georreferenciado</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+    
+    <!-- Estilos CSS -->
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="mapa-tablas.css">
+</head>
+<body>
+    <!-- Pantalla de Login -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-container">
+            <div class="login-header">
+                <h1>ETA</h1>
+            </div>
+            
+            <form id="loginForm" class="login-form">
+                <div class="form-group">
+                    <label for="username">Usuario:</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Contraseña:</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                
+                <button type="submit" class="login-btn">Iniciar Sesión</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Aplicación Principal -->
+    <div id="mainApp" class="main-app" style="display: none;">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <h1>ETA</h1>
+                <div class="user-info">
+                    <span>Bienvenido, <strong id="currentUser"></strong></span>
+                    <button id="logoutBtn" class="logout-btn">Cerrar Sesión</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dashboard Principal -->
+        <main class="main-content">
+            <!-- Pestañas de Navegación -->
+            <div class="tabs-container">
+                <button class="tab-btn active" data-tab="reportes">Reportes diarios (SESNSP)</button>
+                <button class="tab-btn" data-tab="carpetas">Carpetas de investigación (IIEG)</button>
+            </div>
+            
+            <!-- Contenido Pestaña: Carpetas de investigación (IIEG) -->
+            <div id="tab-carpetas" class="tab-content">
+            <section class="dashboard-section">
+                <h2>📊 Dashboard de Analíticas</h2>
+                
+                <!-- Panel de Filtros -->
+                <div class="filters-panel">
+                    <h3>🔍 Panel de Filtrado Consolidado</h3>
+                    
+                    <div class="filters-grid">
+                        <div class="filter-group">
+                            <h4>FILTROS POR CATEGORÍA</h4>
+                            <div class="filter-row">
+                                <div class="filter-item">
+                                    <label for="municipioFilter">MUNICIPIO:</label>
+                                    <select id="municipioFilter">
+                                        <option value="">Todos los municipios</option>
+                                    </select>
+                                </div>
+                                <div class="filter-item">
+                                    <label for="delitoFilter">TIPO DE DELITO:</label>
+                                    <select id="delitoFilter">
+                                        <option value="">Todos los delitos</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <h4>⏱️ LÍNEA DE TIEMPO INTERACTIVA</h4>
+                            <div class="timeline-controls">
+                                <div class="timeline-row">
+                                    <div class="timeline-item">
+                                        <label for="startYear">AÑO DE INICIO</label>
+                                        <input type="range" id="startYear" min="2018" max="2025" value="2018">
+                                        <span id="startYearValue">2018</span>
+                                    </div>
+                                    <div class="timeline-item">
+                                        <label for="startMonth">MES DE INICIO</label>
+                                        <select id="startMonth">
+                                            <option value="0">Enero</option>
+                                            <option value="1">Febrero</option>
+                                            <option value="2">Marzo</option>
+                                            <option value="3">Abril</option>
+                                            <option value="4">Mayo</option>
+                                            <option value="5">Junio</option>
+                                            <option value="6">Julio</option>
+                                            <option value="7">Agosto</option>
+                                            <option value="8">Septiembre</option>
+                                            <option value="9">Octubre</option>
+                                            <option value="10">Noviembre</option>
+                                            <option value="11">Diciembre</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="timeline-row">
+                                    <div class="timeline-item">
+                                        <label for="endYear">AÑO DE FIN</label>
+                                        <input type="range" id="endYear" min="2018" max="2025" value="2025">
+                                        <span id="endYearValue">2025</span>
+                                    </div>
+                                    <div class="timeline-item">
+                                        <label for="endMonth">MES DE FIN</label>
+                                        <select id="endMonth">
+                                            <option value="0">Enero</option>
+                                            <option value="1">Febrero</option>
+                                            <option value="2">Marzo</option>
+                                            <option value="3">Abril</option>
+                                            <option value="4">Mayo</option>
+                                            <option value="5">Junio</option>
+                                            <option value="6">Julio</option>
+                                            <option value="7">Agosto</option>
+                                            <option value="8">Septiembre</option>
+                                            <option value="9">Octubre</option>
+                                            <option value="10">Noviembre</option>
+                                            <option value="11" selected>Diciembre</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="filter-actions">
+                        <button id="applyFilters" class="btn btn-primary">🔍 Aplicar Filtros</button>
+                        <button id="clearFilters" class="btn btn-secondary">🗑️ Limpiar Filtros</button>
+                        <button id="exportResults" class="btn btn-success">📥 Descargar Resultados</button>
+                    </div>
+                </div>
+
+                <!-- Métricas -->
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-icon">📊</div>
+                        <div class="metric-content">
+                            <div class="metric-value" id="totalRegistros">0</div>
+                            <div class="metric-label">Total de casos registrados</div>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">👥</div>
+                        <div class="metric-content">
+                            <div class="metric-value" id="totalVictimas">0</div>
+                            <div class="metric-label">Total de incidentes</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gráficas -->
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <h3>Víctimas por Municipio</h3>
+                        <canvas id="municipioChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Evolución anual de Víctimas</h3>
+                        <canvas id="anualChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Casos por municipio</h3>
+                        <canvas id="fosasChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Evolución Anual de Casos</h3>
+                        <canvas id="fosasAnualChart"></canvas>
+                     </div>
+                </div>
+                <div class="map-source" style="text-align: center; margin-top: 15px; padding: 10px; font-size: 0.9em; color: #666;">
+                    <em>Fuente: Instituto de Información Estadística y Geográfica de Jalisco. Carpetas de investigación.</em>
+                </div>
+            </section>
+            <!-- Sección del Mapa -->
+            <section class="map-section">
+                <h2>🗺️ Mapa Dinámico</h2>
+                <div class="map-wrapper">
+                    <div id="map" class="map-container"></div>
+                    
+                    <!-- Cuadro de Simbología por Año -->
+                    <div class="year-symbology-panel">
+                        <h3>Año</h3>
+                        <div class="year-checkboxes">
+                            <label class="year-checkbox">
+                                <input type="checkbox" id="year-2018" value="2018">
+                                <span class="year-color" style="background-color: #2C3E50;"></span>
+                                <span class="year-label">2018</span>
+                            </label>
+                            <label class="year-checkbox">
+                                <input type="checkbox" id="year-2019" value="2019">
+                                <span class="year-color" style="background-color: #27AE60;"></span>
+                                <span class="year-label">2019</span>
+                            </label>
+                            <label class="year-checkbox">
+                                <input type="checkbox" id="year-2020" value="2020">
+                                <span class="year-color" style="background-color: #3498DB;"></span>
+                                <span class="year-label">2020</span>
+                            </label>
+                            <label class="year-checkbox">
+                                <input type="checkbox" id="year-2021" value="2021">
+                                <span class="year-color" style="background-color: #F1C40F;"></span>
+                                <span class="year-label">2021</span>
+                            </label>
+                            <label class="year-checkbox">
+                                <input type="checkbox" id="year-2022" value="2022">
+                                <span class="year-color" style="background-color: #E67E22;"></span>
+                                <span class="year-label">2022</span>
+                            </label>
+                            <label class="year-checkbox">
+                                <input type="checkbox" id="year-2023" value="2023">
+                                <span class="year-color" style="background-color: #9B59B6;"></span>
+                                <span class="year-label">2023</span>
+                            </label>
+                            <label class="year-checkbox">
+                                <input type="checkbox" id="year-2024" value="2024">
+                                <span class="year-color" style="background-color: #95A5A6;"></span>
+                                <span class="year-label">2024</span>
+                            </label>
+                            <label class="year-checkbox">
+                                <input type="checkbox" id="year-2025" value="2025" checked>
+                                <span class="year-color" style="background-color: #E74C3C;"></span>
+                                <span class="year-label">2025</span>
+                            </label>
+                            <label class="year-checkbox-2025p">
+                                <input type="checkbox" id="show2025p">
+                                <span class="star-symbol" style="color: #000000; font-size: 12px;">★</span>
+                                <span class="year-label">TODOS</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+
+                    
+                </div>
+                <div class="map-source" style="text-align: center; margin-top: 15px; padding: 10px; font-size: 0.9em; color: #666;">
+                    <em>Fuente: Instituto de Información Estadística y Geográfica de Jalisco. Carpetas de investigación.</em>
+                </div>
+            </section>
+            
+            <!-- Sección Tabla Jerárquica de Eventos -->
+            <section class="dashboard-section">
+                <h2>📊 Tabla de Eventos por Ubicación</h2>
+                <div class="tabla-jerarquica-container">
+                    <div id="tablaJerarquicaLoading" class="loading-message">
+                        <p>🔄 Cargando datos...</p>
+                    </div>
+                    <div id="tablaJerarquicaWrapper" class="tabla-jerarquica-wrapper" style="display: none;">
+                        <table id="tablaJerarquica" class="tabla-jerarquica">
+                            <thead>
+                                <tr>
+                                    <th class="col-fija">Ubicación</th>
+                                    <th class="col-datos">Datos por Año/Mes/Día</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaJerarquicaBody">
+                                <!-- Datos se cargarán dinámicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="map-source" style="text-align: center; margin-top: 15px; padding: 10px; font-size: 0.9em; color: #666;">
+                    <em>Fuente: Instituto de Información Estadística y Geográfica de Jalisco. Carpetas de investigación.</em>
+                </div>
+            </section>
+            </div>
+            <!-- Fin Pestaña: Carpetas de investigación (IIEG) -->
+
+            <!-- Contenido Pestaña: Reportes diarios (SESNSP) -->
+            <div id="tab-reportes" class="tab-content active">
+            
+            <!-- Sección Mapa Nacional -->
+            <section class="dashboard-section" id="seccionMapaNacional">
+                <h2>🇲🇽 Mapa Nacional - Homicidios Dolosos</h2>
+                <div class="mapa-nacional-container" style="position: relative;">
+                    <!-- Menú de descarga -->
+                    <div class="menu-descarga-container" style="position: absolute; top: 10px; right: 10px; z-index: 1000;">
+                        <button class="btn-menu-descarga" id="btnMenuMapaNacional" title="Opciones de descarga">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="3" y="3" width="18" height="18" rx="2" stroke="#5b6b8f" stroke-width="1.5" fill="none"/>
+                                <path d="M8 3L16 3L19 6L19 21C19 21.5523 18.5523 22 18 22L6 22C5.44772 22 5 21.5523 5 21L5 6L8 3Z" stroke="#5b6b8f" stroke-width="1.5" fill="none"/>
+                                <path d="M15 3L15 7L19 7" stroke="#5b6b8f" stroke-width="1.5" fill="none"/>
+                                <path d="M12 10L12 16M12 16L9 13M12 16L15 13" stroke="#5b6b8f" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <rect x="8" y="18" width="8" height="1.5" rx="0.75" fill="#5b6b8f"/>
+                            </svg>
+                        </button>
+                        <div class="menu-descarga-opciones" id="menuMapaNacional" style="display: none;">
+                            <button class="opcion-descarga" data-tipo="captura" data-seccion="mapaNacional">
+                                <span class="icono-opcion">📸</span>
+                                <span class="texto-opcion">Captura de pantalla</span>
+                            </button>
+                            <button class="opcion-descarga" data-tipo="xlsx" data-seccion="mapaNacional">
+                                <span class="icono-opcion">📈</span>
+                                <span class="texto-opcion">Tabla en XLSX</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="fecha-display-nacional">
+                        <h3>Homicidios Dolosos del Día</h3>
+                        <h3 id="fechaActualNacional">1 de octubre de 2025</h3>
+                    </div>
+                    
+                    <!-- Contenedor con Tabla y Mapa -->
+                    <div class="mapa-tabla-wrapper">
+                        <!-- Tabla de Datos (Izquierda) -->
+                        <div class="tabla-datos-container">
+                            <div class="tabla-datos-scroll">
+                                <table id="tablaDatosNacional" class="tabla-datos-nacional">
+                                    <thead>
+                                        <tr>
+                            <th>Entidad</th>
+                            <th>Víctimas</th>
+                            <th>Acumulado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Se llena dinámicamente con JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Mapa SVG (Derecha) -->
+                        <div class="mapa-derecha-container">
+                            <div id="mapaNacionalSVG" class="mapa-svg-container"></div>
+                            
+                            <!-- Controles debajo del mapa -->
+                            <div class="controles-fecha">
+                                <button id="btnAnteriorNacional" class="btn-fecha">◀ Día Anterior</button>
+                                <input type="range" id="sliderFechaNacional" min="0" max="122" value="0" class="slider-fecha">
+                                <button id="btnSiguienteNacional" class="btn-fecha">Día Siguiente ▶</button>
+                            </div>
+                            
+                            <!-- Escala de Colores -->
+                            <div class="escala-colores">
+                        <h4>Escala de Homicidios Diarios</h4>
+                        <div class="escala-items">
+                            <div class="escala-item">
+                                <div class="escala-color color-0"></div>
+                                <div class="escala-label">0</div>
+                            </div>
+                            <div class="escala-item">
+                                <div class="escala-color color-1-2"></div>
+                                <div class="escala-label">1-2</div>
+                            </div>
+                            <div class="escala-item">
+                                <div class="escala-color color-3-4"></div>
+                                <div class="escala-label">3-4</div>
+                            </div>
+                            <div class="escala-item">
+                                <div class="escala-color color-5-6"></div>
+                                <div class="escala-label">5-6</div>
+                            </div>
+                            <div class="escala-item">
+                                <div class="escala-color color-7-8"></div>
+                                <div class="escala-label">7-8</div>
+                            </div>
+                            <div class="escala-item">
+                                <div class="escala-color color-9-10"></div>
+                                <div class="escala-label">9-10</div>
+                            </div>
+                            <div class="escala-item">
+                                <div class="escala-color color-mas-10"></div>
+                                <div class="escala-label">>10</div>
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Popup de Estado -->
+                <div id="popupEstado" class="popup-estado">
+                    <div class="popup-contenido">
+                        <button class="popup-cerrar" onclick="cerrarPopup()">×</button>
+                        <h3 id="popupNombreEstado"></h3>
+                        <p><strong>Fecha:</strong> <span id="popupFecha"></span></p>
+                        <p><strong>Víctimas:</strong> <span id="popupVictimas"></span></p>
+                     </div>
+                </div>
+                <div class="map-source" style="text-align: center; margin-top: 15px; padding: 10px; font-size: 0.9em; color: #666;">
+                    <em>Fuente: SESNSP (reporte diario de homicidios) <a href="http://www.informeseguridad.cns.gob.mx/" target="_blank" style="color: #5e72e4;">http://www.informeseguridad.cns.gob.mx/</a></em>
+                </div>
+            </section>
+            
+            <!-- Sección de Tabla 2026 -->
+            <section class="dashboard-section">
+                <h2 id="tituloTabla2026">Homicidios dolosos 2026 - Reportes diarios <span id="fechaActual2026">DD-MM-AA</span></h2>
+                
+                <div class="tabla-homicidios" id="seccion2026" style="position: relative;">
+                    <!-- Menú de descarga -->
+                    <div class="menu-descarga-container" style="position: absolute; top: 10px; right: 10px; z-index: 1000;">
+                        <button class="btn-menu-descarga" id="btnMenu2026" title="Opciones de descarga">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="3" y="3" width="18" height="18" rx="2" stroke="#5b6b8f" stroke-width="1.5" fill="none"/>
+                                <path d="M8 3L16 3L19 6L19 21C19 21.5523 18.5523 22 18 22L6 22C5.44772 22 5 21.5523 5 21L5 6L8 3Z" stroke="#5b6b8f" stroke-width="1.5" fill="none"/>
+                                <path d="M15 3L15 7L19 7" stroke="#5b6b8f" stroke-width="1.5" fill="none"/>
+                                <path d="M12 10L12 16M12 16L9 13M12 16L15 13" stroke="#5b6b8f" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <rect x="8" y="18" width="8" height="1.5" rx="0.75" fill="#5b6b8f"/>
+                            </svg>
+                        </button>
+                        <div class="menu-descarga-opciones" id="menu2026" style="display: none;">
+                            <button class="opcion-descarga" data-tipo="captura" data-seccion="2026">
+                                <span class="icono-opcion">📸</span>
+                                <span class="texto-opcion">Captura de pantalla</span>
+                            </button>
+                            <button class="opcion-descarga" data-tipo="xlsx" data-seccion="2026">
+                                <span class="icono-opcion">📋</span>
+                                <span class="texto-opcion">Tabla en XLSX</span>
+                            </button>
+                            <button class="opcion-descarga" data-tipo="jpeg" data-seccion="2026">
+                                <span class="icono-opcion">📊</span>
+                                <span class="texto-opcion">Gráfica en JPEG</span>
+                            </button>
+                            <button class="opcion-descarga" data-tipo="jpeg-lineal" data-seccion="2026">
+                                <span class="icono-opcion">📈</span>
+                                <span class="texto-opcion">Gráfica lineal en JPEG</span>
+                            </button>
+                        </div>
+                    </div>
+                    <h3>Homicidios Dolosos 2026</h3>
+                    <div class="tabla-scroll">
+                        <table id="tabla2026" class="tabla-datos">
+                            <thead></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <div class="grafica-container">
+                        <canvas id="grafica2026"></canvas>
+                    </div>
+                    <p style="text-align: center; font-size: 12px; color: #666; margin-top: 10px; padding-bottom: 10px;">
+                        Fuente: SESNSP (reporte diario de homicidios) <a href="http://www.informeseguridad.cns.gob.mx/" target="_blank" style="color: #007bff;">http://www.informeseguridad.cns.gob.mx/</a>
+                    </p>
+                </div>
+            </section>
+            
+            <!-- Sección de Tablas de Homicidios -->
+            <section class="dashboard-section">
+                <!-- Banner Colapsable -->
+                <div class="banner-colapsable" id="bannerSinFosas" style="position: relative;">
+                    <span class="icono-colapsar" id="iconoSinFosas">+</span>
+                    <h3 style="margin: 0; display: inline-block;" id="tituloTablasHomicidios">📊 Tablas de Homicidios Dolosos - actualizado al día 02-02-2026</h3>
+                    
+                    <!-- Menú de descarga -->
+                    <div class="menu-descarga-container" style="position: absolute; top: 50%; right: 15px; transform: translateY(-50%); z-index: 1000;">
+                        <button class="btn-menu-descarga" id="btnMenuSinFosas" title="Opciones de descarga">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="3" y="3" width="18" height="18" rx="2" stroke="#5b6b8f" stroke-width="1.5" fill="none"/>
+                                <path d="M8 3L16 3L19 6L19 21C19 21.5523 18.5523 22 18 22L6 22C5.44772 22 5 21.5523 5 21L5 6L8 3Z" stroke="#5b6b8f" stroke-width="1.5" fill="none"/>
+                                <path d="M15 3L15 7L19 7" stroke="#5b6b8f" stroke-width="1.5" fill="none"/>
+                                <path d="M12 10L12 16M12 16L9 13M12 16L15 13" stroke="#5b6b8f" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <rect x="8" y="18" width="8" height="1.5" rx="0.75" fill="#5b6b8f"/>
+                            </svg>
+                        </button>
+                        <div class="menu-descarga-opciones" id="menuSinFosas" style="display: none;">
+                            <button class="opcion-descarga" data-tipo="captura" data-seccion="sinFosas">
+                                <span class="icono-opcion">📸</span>
+                                <span class="texto-opcion">Captura de pantalla</span>
+                            </button>
+                            <button class="opcion-descarga" data-tipo="xlsx" data-seccion="sinFosas">
+                                <span class="icono-opcion">📋</span>
+                                <span class="texto-opcion">Tabla en XLSX</span>
+                            </button>
+                            <button class="opcion-descarga" data-tipo="jpeg" data-seccion="sinFosas">
+                                <span class="icono-opcion">📊</span>
+                                <span class="texto-opcion">Gráfica en JPEG</span>
+                            </button>
+                            <button class="opcion-descarga" data-tipo="jpeg-lineal" data-seccion="sinFosas">
+                                <span class="icono-opcion">📈</span>
+                                <span class="texto-opcion">Gráfica lineal en JPEG</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contenido Colapsable -->
+                <div class="tabla-homicidios" id="seccionSinFosas" style="position: relative; display: none;">
+                    <h3>Homicidios dolosos - reportes diarios</h3>
+                    <div class="tabla-scroll">
+                        <table id="tablaSinFosas" class="tabla-datos">
+                            <thead></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <div class="grafica-container">
+                        <canvas id="graficaSinFosas"></canvas>
+                    </div>
+                    
+                    <!-- Gráfica de Líneas Mensual -->
+                    <div id="contenedorGraficaLineal" class="grafica-container" style="margin-top: 30px; padding-bottom: 60px;">
+                        <h4 style="text-align: center; margin-bottom: 15px;">Tendencia Mensual de Homicidios Dolosos</h4>
+                        <canvas id="graficaLineasMensual"></canvas>
+                        <p style="text-align: center; font-size: 12px; color: #666; margin-top: 35px;">
+                            Fuente: SESNSP (reporte diario de homicidios) <a href="http://www.informeseguridad.cns.gob.mx/" target="_blank" style="color: #007bff;">http://www.informeseguridad.cns.gob.mx/</a>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Banner Colapsable -->
+                <div class="banner-colapsable" id="bannerConFosas" style="position: relative;">
+                    <span class="icono-colapsar" id="iconoConFosas">+</span>
+                    <h3 style="margin: 0; display: inline-block;">Homicidios dolosos - (incluye víctimas de fosas)</h3>
+                    
+                    <!-- Menú de descarga -->
+                    <div class="menu-descarga-container" style="position: absolute; top: 50%; right: 15px; transform: translateY(-50%); z-index: 1000;">
+                        <button class="btn-menu-descarga" id="btnMenuConFosas" title="Opciones de descarga">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="3" y="3" width="18" height="18" rx="2" stroke="#5b6b8f" stroke-width="1.5" fill="none"/>
+                                <path d="M8 3L16 3L19 6L19 21C19 21.5523 18.5523 22 18 22L6 22C5.44772 22 5 21.5523 5 21L5 6L8 3Z" stroke="#5b6b8f" stroke-width="1.5" fill="none"/>
+                                <path d="M15 3L15 7L19 7" stroke="#5b6b8f" stroke-width="1.5" fill="none"/>
+                                <path d="M12 10L12 16M12 16L9 13M12 16L15 13" stroke="#5b6b8f" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <rect x="8" y="18" width="8" height="1.5" rx="0.75" fill="#5b6b8f"/>
+                            </svg>
+                        </button>
+                        <div class="menu-descarga-opciones" id="menuConFosas" style="display: none;">
+                            <button class="opcion-descarga" data-tipo="captura" data-seccion="conFosas">
+                                <span class="icono-opcion">📸</span>
+                                <span class="texto-opcion">Captura de pantalla</span>
+                            </button>
+                            <button class="opcion-descarga" data-tipo="xlsx" data-seccion="conFosas">
+                                <span class="icono-opcion">📈</span>
+                                <span class="texto-opcion">Tabla en XLSX</span>
+                            </button>
+                            <button class="opcion-descarga" data-tipo="jpeg" data-seccion="conFosas">
+                                <span class="icono-opcion">🖼️</span>
+                                <span class="texto-opcion">Gráfica en JPEG</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contenido Colapsable -->
+                <div class="tabla-homicidios" id="seccionConFosas" style="position: relative; display: none;">
+                    <div class="tabla-scroll">
+                        <table id="tablaConFosas" class="tabla-datos">
+                            <thead></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <div class="grafica-container">
+                        <canvas id="graficaConFosas"></canvas>
+                    </div>
+                    <p style="text-align: center; font-size: 12px; color: #666; margin-top: 10px; padding-bottom: 10px;">
+                        Fuente: SESNSP (reporte diario de homicidios) <a href="http://www.informeseguridad.cns.gob.mx/" target="_blank" style="color: #007bff;">http://www.informeseguridad.cns.gob.mx/</a>
+                    </p>
+                </div>
+            </section>
+            </div>
+            <!-- Fin Pestaña: Reportes diarios (SESNSP) -->
+        </main>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <p>AA</p>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <!-- Librerías para descarga -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+    <script src="script.js"></script>
+    <script src="mapa-tablas.js"></script>
+    <script src="tabla-jerarquica.js"></script>
+</body>
+</html>
+
