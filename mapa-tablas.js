@@ -648,17 +648,17 @@ function formatearFecha(fecha) {
     if (partes.length !== 2) return fecha;
     
     // Formato de entrada: "27-oct", "1-nov", etc.
-    const dia = parseInt(partes[0]);
+    const dia = String(partes[0]).padStart(2, '0');
     const mesAbrev = partes[1].toLowerCase();
     
     const mesesMap = {
-        'ene': 'Enero', 'feb': 'Febrero', 'mar': 'Marzo', 'abr': 'Abril',
-        'may': 'Mayo', 'jun': 'Junio', 'jul': 'Julio', 'ago': 'Agosto',
-        'sep': 'Septiembre', 'oct': 'Octubre', 'nov': 'Noviembre', 'dic': 'Diciembre'
+        'ene': '01', 'feb': '02', 'mar': '03', 'abr': '04',
+        'may': '05', 'jun': '06', 'jul': '07', 'ago': '08',
+        'sep': '09', 'oct': '10', 'nov': '11', 'dic': '12'
     };
     
-    const mes = mesesMap[mesAbrev] || mesAbrev;
-    const año = 2025;  // Año fijo según el proyecto
+    const mes = mesesMap[mesAbrev] || '01';
+    const año = 2026;  // Año actualizado
     
     return `${dia}/${mes}/${año}`;
 }
