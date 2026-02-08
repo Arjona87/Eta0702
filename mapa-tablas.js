@@ -137,15 +137,12 @@ function obtenerUltimaFechaConDatos() {
 }
 
 function actualizarTituloTablas() {
-    // Actualiza el título de la sección de tablas con la última fecha
+    // Actualiza el título de la sección de tablas con texto fijo
     const tituloElemento = document.getElementById('tituloTablasHomicidios');
     if (!tituloElemento) return;
     
-    const fechaFormateada = obtenerUltimaFechaConDatos();
-    if (fechaFormateada) {
-        // Formato: DD-Mes-AAAA (ejemplo: 01-Dic-2025)
-        tituloElemento.textContent = `📊 Tablas de Homicidios Dolosos - actualizado al día ${fechaFormateada}`;
-    }
+    // Título fijo sin fecha dinámica
+    tituloElemento.textContent = 'Homicidios Dolosos 2025';
 }
 
 // ===== INICIALIZACIÓN =====
